@@ -26,7 +26,7 @@ func (c *Client) send(p DataPoint) error {
 }
 
 type ClientView struct {
-	IpAddress      string     `json:"ip"`
+	IpAddress      string `json:"ip"`
 }
 
 
