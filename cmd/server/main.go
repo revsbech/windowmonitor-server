@@ -54,7 +54,7 @@ func main() {
 	fmt.Println("Starting server....")
 
 	bs := 100
-	c := make(chan float64, bs)
+	c := make(chan DataPoint, bs)
 
 	hub = newHub()
 	go hub.run(c)
@@ -90,11 +90,15 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func generateEvents(c chan float64) {
+func generateEvents(c chan DataPoint) {
 	for {
 		value := rand.Float64()
+		p := DataPoint{
+			Timestamp: time.Now(),
+			Value: value,
+		}
 		//fmt.Printf("Event. Random: %f\n", value);
-		c <- value
+		c <- p
 		time.Sleep(1 * time.Second)
 	}
 }

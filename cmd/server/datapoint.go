@@ -5,6 +5,6 @@ import (
 )
 
 type DataPoint struct {
-	Timestamp time.Time
-	Value    float64
+	Timestamp  time.Time `json:"timestamp"`
+	Value      float64   `json:"value"`
 }

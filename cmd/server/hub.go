@@ -37,19 +37,19 @@ func (h *Hub) UnregisterClient(client *Client) {
 
 // Main loop of the Hub. This will listen for events on the input channel, and then broadcast all
 // vents/message to all listenning clients
-func (h *Hub) run(ic chan float64) {
+func (h *Hub) run(ic chan DataPoint) {
 	for {
 		select {
-		case v := <-ic:
-			h.SendValue(v)
+		case p := <-ic:
+			h.SendValue(p)
 		}
 	}
 }
 
 // Send a value to all registered clients
-func (h *Hub) SendValue(v float64) {
+func (h *Hub) SendValue(p DataPoint) {
 	for cl := range h.clients {
-		err := cl.send(v)
+		err := cl.send(p)
 		if err != nil {
 			log.Println("Error sending to client. Maybe client got away")
 			h.UnregisterClient(cl)

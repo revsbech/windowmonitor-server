@@ -1,6 +1,6 @@
 package main
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/gorilla/websocket"
 )
@@ -12,8 +12,13 @@ type Client struct {
 
 // Send the value over the websocke.
 // @ Handle if for some reasone, the connection is down
-func (c *Client) send(v float64) error {
-	err := c.conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%f", v)))
+func (c *Client) send(p DataPoint) error {
+	bytes, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, bytes)
 	if err != nil {
 		return err
 	}
