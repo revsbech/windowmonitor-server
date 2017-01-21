@@ -3,12 +3,15 @@ package main
 import (
 	"flag"
 	"encoding/json"
+	"encoding/binary"
+	"bytes"
 	"fmt"
 	"html/template"
 	"log"
 
 	"math/rand"
 	"net/http"
+	"net"
 	"time"
 
 
@@ -56,8 +59,15 @@ func main() {
 
 	fmt.Printf("Starting server on %s\n", *addr)
 
-	channels["demochannel"] = NewChannel("demochannel", "MyTestChannel")
+	udpPort := 10001
 
+
+	channels["demochannel"] = NewChannel("demochannel", "MyTestChannel")
+	go udpServer(udpPort, channels["demochannel"])
+
+
+ 	//r.Handle("/", http.FileServer(http.Dir("public")))
+	r.PathPrefix("/client").Handler(http.StripPrefix("/client", http.FileServer(http.Dir("frontend/app"))))
 	r.HandleFunc("/echo", echo)
 	r.HandleFunc("/", home)
 	r.HandleFunc("/channel/{channelId}/listen", getListenHandler())
@@ -68,6 +78,49 @@ func main() {
 	}
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
+
+func udpServer(port int, channel *Channel) {
+	log.Printf("Starter UDP server on port %d", port)
+	ServerAddr,err := net.ResolveUDPAddr("udp",fmt.Sprintf(":%d", port))
+ 	if err != nil {
+		log.Fatalf("Unable to start UDP Channel server on port %d\n", port)
+		return
+	}
+
+ 	/* Now listen at selected port */
+ 	ServerConn, err := net.ListenUDP("udp", ServerAddr)
+	if err != nil {
+		log.Fatal("Unable to start UDP Channel server on port 10001")
+	}
+	defer ServerConn.Close()
+	buf := make([]byte, 1024)
+	var values []uint16
+    for {
+        n,addr,err := ServerConn.ReadFromUDP(buf)
+		if err != nil {
+			fmt.Println("Error: ",err)
+		}
+
+		fmt.Printf("Reveiced %d bytes from %s\n", n, addr)
+		values = make([]uint16, n /2)
+
+		binary.Read(bytes.NewBuffer(buf[0:n]), binary.LittleEndian, &values)
+		fmt.Println(values)
+
+		//We should really send all datapoints as an array to optimize the Websocket performance.
+		for _, v := range values {
+			//fmt.Println(v)
+			p := DataPoint{
+				Timestamp: time.Now(),
+				Value: float64(v),
+			}
+			channel.SendValue(p)
+		}
+    }
+
+	return
+}
+
 
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {

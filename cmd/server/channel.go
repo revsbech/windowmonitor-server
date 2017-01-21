@@ -6,9 +6,10 @@ import (
 
 // This represent a channel in the server
 type Channel struct {
-	id   string
-	name string
-	hub  *Hub
+	id      string
+	name    string
+	hub     *Hub
+	channel chan DataPoint
 }
 
 func NewChannel(id string, name string) *Channel {
@@ -22,8 +23,12 @@ func NewChannel(id string, name string) *Channel {
 	go channel.hub.run(c)
 
 	// Now, add dummy events on this channel
-	go generateEvents(c)
+	//go generateEvents(c)
 	return channel
+}
+
+func (c *Channel) SendValue(p DataPoint) {
+	c.hub.SendValue(p)
 }
 
 func (c *Channel) RegisterClient(client *Client) {
